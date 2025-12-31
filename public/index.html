@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Café Live Chat</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #6b4f2c;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button:disabled {
+      background: #aaa;
+    }
+
+    #status {
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    #info {
+      margin-top: 10px;
+      color: red;
+      text-align: center;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>☕ Kirim Pesan ke Videotron</h2>
+
+<div id="status">Menghubungkan ke server...</div>
+
+<input id="username" placeholder="Nama kamu" maxlength="15">
+<input id="message" placeholder="Pesan (maks 60 karakter)" maxlength="60">
+<button id="btn">Kirim</button>
+
+<div id="info"></div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  const btn = document.getElementById("btn");
+  const info = document.getElementById("info");
+  const status = document.getElementById("status");
+  const usernameInput = document.getElementById("username");
+  const messageInput = document.getElementById("message");
+
+  let locked = false;
+  const SPAM_DELAY = 5; // detik
+  let timer = null;
+
+  /* =====================
+     STATUS KONEKSI
+  ===================== */
+  socket.on("connect", () => {
+    status.innerText = "Terhubung ke server ✅";
+    status.style.color = "green";
+  });
+
+  socket.on("connect_error", () => {
+    status.innerText = "Gagal terhubung ke server ❌";
+    status.style.color = "red";
+  });
+
+  /* =====================
+     KIRIM PESAN
+  ===================== */
+  btn.onclick = () => {
+    if (locked) return;
+
+    const username = usernameInput.value.trim();
+    const message = messageInput.value.trim();
+
+    if (!username || !message) {
+      info.innerText = "Nama dan pesan wajib diisi";
+      return;
+    }
+
+    socket.emit("send-message", { username, message });
+    messageInput.value = "";
+
+    startCooldown();
+  };
+
+  /* =====================
+     COOLDOWN NORMAL
+  ===================== */
+  function startCooldown() {
+    locked = true;
+    btn.disabled = true;
+
+    let s = SPAM_DELAY;
+    info.innerText = `Tunggu ${s} detik`;
+
+    timer = setInterval(() => {
+      s--;
+      info.innerText = `Tunggu ${s} detik`;
+
+      if (s <= 0) {
+        clearInterval(timer);
+        locked = false;
+        btn.disabled = false;
+        info.innerText = "";
+      }
+    }, 1000);
+  }
+
+  /* =====================
+     JIKA SPAM (SERVER)
+  ===================== */
+  socket.on("spam-warning", () => {
+    if (timer) clearInterval(timer);
+    startCooldown();
+  });
+</script>
