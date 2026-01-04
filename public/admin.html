@@ -7,58 +7,73 @@
 body{font-family:Arial;background:#111;color:#fff;padding:20px}
 .card{background:#222;padding:12px;border-radius:10px;margin-bottom:10px}
 button{margin-right:6px}
+input{padding:8px;width:100%;margin-bottom:10px}
 input[type=range]{width:100%}
+#error{color:red;margin-top:10px}
 </style>
 </head>
 <body>
 
 <div id="login">
-<h2>Admin Login</h2>
-<input id="pass" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<div id="info"></div>
+  <h2>Admin Login</h2>
+  <input id="pass" type="password" placeholder="Password admin">
+  <button onclick="login()">Login</button>
+  <div id="error"></div>
 </div>
 
 <div id="dash" style="display:none">
-<h2>Dashboard</h2>
-<button onclick="logout()">Logout</button>
-<div id="list"></div>
+  <h2>Dashboard Admin</h2>
+  <button onclick="logout()">Logout</button>
+  <div id="list"></div>
 </div>
 
 <script>
-const socket=io();
-const list=document.getElementById("list");
+const socket = io();
+const list = document.getElementById("list");
+const errorBox = document.getElementById("error");
 
-function login(){socket.emit("admin-login",pass.value);}
-function logout(){socket.emit("admin-logout");location.reload();}
+function login(){
+  errorBox.innerText = "";
+  socket.emit("admin-login", document.getElementById("pass").value);
+}
 
-socket.on("login-success",()=>{
- login.style.display="none";
- dash.style.display="block";
+function logout(){
+  socket.emit("admin-logout");
+  location.reload();
+}
+
+/* === LOGIN RESPONSE === */
+socket.on("login-success", ()=>{
+  document.getElementById("login").style.display="none";
+  document.getElementById("dash").style.display="block";
 });
 
-socket.on("login-failed",()=>info.innerText="Password salah");
-
-socket.on("admin-refresh",msgs=>{
- list.innerHTML="";
- msgs.forEach(m=>{
-  const d=document.createElement("div");
-  d.className="card";
-  d.innerHTML=`
-  <b>${m.username}</b><br>${m.message}<br><br>
-  <button onclick="approve(${m.id})">Approve</button>
-  <button onclick="reject(${m.id})">Reject</button><br><br>
-  Opacity
-  <input type="range" min="0.2" max="1" step="0.1" value="${m.opacity}"
-   onchange="opacity(${m.id},this.value)">
-  `;
-  list.appendChild(d);
- });
+socket.on("login-failed", ()=>{
+  errorBox.innerText = "Password salah";
 });
 
-function approve(id){socket.emit("approve-message",id);}
-function reject(id){socket.emit("reject-message",id);}
-function opacity(id,v){socket.emit("set-opacity",{id,opacity:v});}
+/* === DATA === */
+socket.on("admin-refresh", msgs=>{
+  list.innerHTML="";
+  msgs.forEach(m=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.innerHTML=`
+      <b>${m.username}</b><br>${m.message}<br><br>
+      <button onclick="approve(${m.id})">Approve</button>
+      <button onclick="reject(${m.id})">Reject</button><br><br>
+      Opacity
+      <input type="range" min="0.2" max="1" step="0.1"
+        value="${m.opacity}"
+        onchange="opacity(${m.id},this.value)">
+    `;
+    list.appendChild(d);
+  });
+});
+
+function approve(id){ socket.emit("approve-message", id); }
+function reject(id){ socket.emit("reject-message", id); }
+function opacity(id,v){ socket.emit("set-opacity",{id,opacity:v}); }
 </script>
 
 </body>
