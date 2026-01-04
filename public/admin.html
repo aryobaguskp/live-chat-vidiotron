@@ -9,11 +9,11 @@
 body{
   margin:0;
   font-family:Arial, Helvetica, sans-serif;
-  background:linear-gradient(135deg,#111,#1c1c1c);
+  background:linear-gradient(135deg,#0f0f0f,#1a1a1a);
   color:#fff;
 }
 
-/* LOGIN */
+/* ===== LOGIN ===== */
 #login-box{
   max-width:360px;
   margin:120px auto;
@@ -38,14 +38,16 @@ input{
 }
 
 button{
-  width:100%;
-  padding:12px;
-  margin-top:15px;
+  padding:10px 16px;
   background:#cfa35a;
   border:none;
   border-radius:8px;
-  font-size:16px;
+  font-size:14px;
   cursor:pointer;
+}
+
+button.secondary{
+  background:#444;
 }
 
 #error{
@@ -54,7 +56,7 @@ button{
   text-align:center;
 }
 
-/* DASHBOARD */
+/* ===== DASHBOARD ===== */
 #dashboard{
   display:none;
   padding:25px;
@@ -64,18 +66,15 @@ button{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:20px;
+  margin-bottom:25px;
 }
 
 #topbar h2{
   margin:0;
 }
 
-#logout{
-  background:#444;
-  padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
+#actions-top button{
+  margin-left:8px;
 }
 
 #list{
@@ -96,20 +95,23 @@ button{
   color:#ffd28a;
 }
 
+.status{
+  font-size:13px;
+  opacity:.7;
+}
+
 .actions{
   margin-top:12px;
 }
 
 .actions button{
-  width:auto;
-  padding:8px 14px;
   margin-right:8px;
-  font-size:14px;
+  font-size:13px;
 }
 
 input[type=range]{
   width:100%;
-  margin-top:10px;
+  margin-top:8px;
 }
 
 .empty{
@@ -127,7 +129,9 @@ input[type=range]{
 <div id="login-box">
   <h2>Admin Login</h2>
   <input id="pass" type="password" placeholder="Password admin">
-  <button onclick="login()">Masuk Dashboard</button>
+  <button style="width:100%;margin-top:15px" onclick="login()">
+    Masuk Dashboard
+  </button>
   <div id="error"></div>
 </div>
 
@@ -135,7 +139,10 @@ input[type=range]{
 <div id="dashboard">
   <div id="topbar">
     <h2>Dashboard Admin</h2>
-    <div id="logout" onclick="logout()">Logout</div>
+    <div id="actions-top">
+      <button onclick="approveAll()">Approve Semua</button>
+      <button class="secondary" onclick="logout()">Logout</button>
+    </div>
   </div>
 
   <div id="list"></div>
@@ -146,6 +153,7 @@ const socket = io();
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 
+/* ===== LOGIN ===== */
 function login(){
   errorBox.innerText="";
   socket.emit("admin-login", document.getElementById("pass").value);
@@ -165,6 +173,7 @@ socket.on("login-failed",()=>{
   errorBox.innerText="Password salah";
 });
 
+/* ===== DATA ===== */
 socket.on("admin-refresh",msgs=>{
   list.innerHTML="";
 
@@ -178,11 +187,14 @@ socket.on("admin-refresh",msgs=>{
     d.className="card";
     d.innerHTML=`
       <b>${m.username}</b><br>
-      ${m.message}
+      ${m.message}<br>
+      <div class="status">
+        Status: ${m.approved ? "✅ Approved" : "⏳ Pending"}
+      </div>
 
       <div class="actions">
         <button onclick="approve(${m.id})">Approve</button>
-        <button onclick="reject(${m.id})">Reject</button>
+        <button class="secondary" onclick="reject(${m.id})">Reject</button>
       </div>
 
       Opacity:
@@ -194,9 +206,22 @@ socket.on("admin-refresh",msgs=>{
   });
 });
 
-function approve(id){socket.emit("approve-message",id);}
-function reject(id){socket.emit("reject-message",id);}
-function opacity(id,v){socket.emit("set-opacity",{id,opacity:v});}
+/* ===== ACTIONS ===== */
+function approve(id){
+  socket.emit("approve-message",id);
+}
+
+function reject(id){
+  if(confirm("Hapus pesan ini?")){
+    socket.emit("reject-message",id);
+  }
+}
+
+function approveAll(){
+  if(confirm("Approve SEMUA pesan ke videotron?")){
+    socket.emit("approve-all");
+  }
+}
 </script>
 
 </body>

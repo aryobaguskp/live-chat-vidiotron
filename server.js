@@ -45,13 +45,14 @@ io.on("connection", socket => {
     }
     lastMessageTime[socket.id] = now;
 
-    const msg = {
-      id: now,
-      username: filter(username),
-      message: filter(message),
-      approved: false,
-      opacity: 1
-    };
+    const msgData = {
+  id: now,
+  username: cleanUsername,
+  message: cleanMessage,
+  approved: false,
+  opacity: 1
+};
+
 
     messages.push(msg);
     io.emit("admin-refresh", messages);
@@ -77,6 +78,18 @@ io.on("connection", socket => {
     if (!socket.isAdmin) return;
     const msg = messages.find(m => m.id === id);
     if (!msg) return;
+
+    // ===== ADMIN APPROVE SEMUA =====
+  socket.on("approve-all", () => {
+  messages = messages.map(m => {
+    m.approved = true;
+    return m;
+  });
+
+  io.emit("admin-refresh", messages);
+  io.emit("refresh-messages", messages.filter(m => m.approved));
+  });
+
 
     msg.approved = true;
     io.emit("refresh-messages", messages.filter(m => m.approved));
