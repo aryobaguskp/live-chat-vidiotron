@@ -35,71 +35,45 @@ io.on("connection", socket => {
   socket.emit("refresh-messages", messages.filter(m => m.approved));
 
   /* ===== CUSTOMER ===== */
-  socket.on("send-message", ({ username, message }) => {
-    if (!username || !message) return;
+  socket.on("send-message", (data) => {
+  const { username, message } = data;
+  if (!username || !message) return;
 
-    const now = Date.now();
-    if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < SPAM_DELAY) {
-      socket.emit("spam-warning", "Tunggu beberapa detik");
-      return;
-    }
-    lastMessageTime[socket.id] = now;
+  const now = Date.now();
+  if (lastMessageTime[socket.id] &&
+      now - lastMessageTime[socket.id] < SPAM_DELAY) {
+    socket.emit("spam-warning", "Tunggu beberapa detik sebelum kirim lagi");
+    return;
+  }
+  lastMessageTime[socket.id] = now;
 
-    const msgData = {
-  id: now,
-  username: cleanUsername,
-  message: cleanMessage,
-  approved: false,
-  opacity: 1
-};
+  const msgData = {
+    id: now,
+    username: filterKataKasar(username),
+    message: filterKataKasar(message),
+    approved: false,
+    opacity: 1
+  };
 
+  messages.push(msgData);
 
-    messages.push(msg);
-    io.emit("admin-refresh", messages);
-  });
-
-  /* ===== ADMIN LOGIN ===== */
-  socket.on("admin-login", password => {
-    if (password === ADMIN_PASSWORD) {
-      socket.isAdmin = true;
-      socket.emit("login-success");
-      socket.emit("admin-refresh", messages);
-    } else {
-      socket.emit("login-failed");
-    }
-  });
-
-  socket.on("admin-logout", () => {
-    socket.isAdmin = false;
-  });
-
-  /* ===== ADMIN ACTION ===== */
-  socket.on("approve-message", id => {
-    if (!socket.isAdmin) return;
-    const msg = messages.find(m => m.id === id);
-    if (!msg) return;
-
-    // ===== ADMIN APPROVE SEMUA =====
-  socket.on("approve-all", () => {
-  messages = messages.map(m => {
-    m.approved = true;
-    return m;
-  });
-
+  // 🔴 ADMIN HARUS UPDATE
   io.emit("admin-refresh", messages);
+
+  // display hanya yg approved
   io.emit("refresh-messages", messages.filter(m => m.approved));
-  });
 
+  // realtime ping
+  io.emit("new-message", msgData);
 
-    msg.approved = true;
+  setTimeout(() => {
+    messages = messages.filter(m => m.id !== msgData.id);
+    io.emit("admin-refresh", messages);
     io.emit("refresh-messages", messages.filter(m => m.approved));
+  }, MESSAGE_LIFETIME);
+});
 
-    setTimeout(() => {
-      messages = messages.filter(m => m.id !== id);
-      io.emit("refresh-messages", messages.filter(m => m.approved));
-      io.emit("admin-refresh", messages);
-    }, MESSAGE_LIFETIME);
-  });
+
 
   socket.on("reject-message", id => {
     if (!socket.isAdmin) return;
