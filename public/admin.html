@@ -137,28 +137,40 @@ button:disabled{
 
 <script>
 const socket = io();
+
+const loginBox = document.getElementById("login");
+const dashboardBox = document.getElementById("dashboard");
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 const btnApproveAll = document.getElementById("btnApproveAll");
+const passInput = document.getElementById("pass");
 
 let busy = false;
 
-/* LOGIN */
-function login(){
-  errorBox.innerText="";
-  socket.emit("admin-login", pass.value);
+/* =========================
+   LOGIN (FIXED)
+========================= */
+function doLogin(){
+  errorBox.innerText = "";
+  socket.emit("admin-login", passInput.value);
+}
+
+function logout(){
+  location.reload();
 }
 
 socket.on("login-success",()=>{
-  login.style.display="none";
-  dashboard.style.display="block";
+  loginBox.style.display = "none";
+  dashboardBox.style.display = "block";
 });
 
 socket.on("login-failed",()=>{
-  errorBox.innerText="Password salah";
+  errorBox.innerText = "Password salah";
 });
 
-/* RENDER */
+/* =========================
+   RENDER
+========================= */
 socket.on("admin-refresh",(msgs)=>{
   busy = false;
   btnApproveAll.disabled = false;
@@ -166,7 +178,8 @@ socket.on("admin-refresh",(msgs)=>{
 });
 
 function render(msgs){
-  list.innerHTML="";
+  list.innerHTML = "";
+
   if(msgs.length === 0){
     list.innerHTML = `<div class="empty">Belum ada pesan</div>`;
     return;
@@ -191,7 +204,9 @@ function render(msgs){
   });
 }
 
-/* ACTIONS */
+/* =========================
+   ACTIONS
+========================= */
 function approve(id){
   if(busy) return;
   busy = true;
@@ -219,6 +234,7 @@ function approveAll(){
   }
 }
 </script>
+
 
 
 </body>
