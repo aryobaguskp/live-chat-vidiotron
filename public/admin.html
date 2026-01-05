@@ -148,10 +148,9 @@ const passInput = document.getElementById("pass");
 
 let busy = false;
 
-/* =========================
-   LOGIN (FIXED)
-========================= */
+/* ========= LOGIN ========= */
 function doLogin(){
+  console.log("LOGIN CLICKED"); // DEBUG
   errorBox.innerText = "";
   socket.emit("admin-login", passInput.value);
 }
@@ -161,17 +160,17 @@ function logout(){
 }
 
 socket.on("login-success",()=>{
+  console.log("LOGIN SUCCESS");
   loginBox.style.display = "none";
   dashboardBox.style.display = "block";
 });
 
 socket.on("login-failed",()=>{
+  console.log("LOGIN FAILED");
   errorBox.innerText = "Password salah";
 });
 
-/* =========================
-   RENDER
-========================= */
+/* ========= RENDER ========= */
 socket.on("admin-refresh",(msgs)=>{
   busy = false;
   btnApproveAll.disabled = false;
@@ -205,9 +204,7 @@ function render(msgs){
   });
 }
 
-/* =========================
-   ACTIONS
-========================= */
+/* ========= ACTION ========= */
 function approve(id){
   if(busy) return;
   busy = true;
@@ -235,6 +232,7 @@ function approveAll(){
   }
 }
 </script>
+
 
 
 
