@@ -88,25 +88,35 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <script>
 const socket = io();
+
+const loginBox = document.getElementById("login");
+const dashboardBox = document.getElementById("dashboard");
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 const btnApproveAll = document.getElementById("btnApproveAll");
 
 let busy = false;
 
-/* ===== LOGIN (ASLI) ===== */
+/* ===== LOGIN (ASLI, WORKING) ===== */
 function login(){
-  errorBox.innerText="";
-  socket.emit("admin-login", document.getElementById("pass").value);
+  errorBox.innerText = "";
+  socket.emit(
+    "admin-login",
+    document.getElementById("pass").value
+  );
 }
-function logout(){ location.reload(); }
+
+function logout(){
+  location.reload();
+}
 
 socket.on("login-success",()=>{
-  login.style.display="none";
-  dashboard.style.display="block";
+  loginBox.style.display = "none";
+  dashboardBox.style.display = "block";
 });
+
 socket.on("login-failed",()=>{
-  errorBox.innerText="Password salah";
+  errorBox.innerText = "Password salah";
 });
 
 /* ===== RENDER ===== */
@@ -117,25 +127,26 @@ socket.on("admin-refresh",(msgs)=>{
 });
 
 function render(msgs){
-  list.innerHTML="";
-  if(msgs.length===0){
-    list.innerHTML=`<div class="empty">Belum ada pesan</div>`;
+  list.innerHTML = "";
+
+  if(msgs.length === 0){
+    list.innerHTML = `<div class="empty">Belum ada pesan</div>`;
     return;
   }
 
   msgs.forEach(m=>{
-    const div=document.createElement("div");
-    div.className="card";
-    div.innerHTML=`
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
       <b>${m.username}</b><br>
       ${m.message}
       <div class="status">
-        Status: ${m.approved?"✅ Approved":"⏳ Pending"}
+        Status: ${m.approved ? "✅ Approved" : "⏳ Pending"}
       </div>
       <div class="actions">
         <button onclick="approve(${m.id})">Approve</button>
-        <button class="secondary" onclick="reject(${m.id})">Reject</button>
-        <button class="secondary" onclick="del(${m.id})">Delete</button>
+        <button class="secondary" onclick="rejectMsg(${m.id})">Reject</button>
+        <button class="secondary" onclick="deleteMsg(${m.id})">Delete</button>
       </div>
     `;
     list.appendChild(div);
@@ -145,33 +156,32 @@ function render(msgs){
 /* ===== ACTIONS ===== */
 function approve(id){
   if(busy) return;
-  busy=true;
-  socket.emit("approve-message",id);
+  busy = true;
+  socket.emit("approve-message", id);
 }
 
-/* 🔴 FIX: reject TANPA busy */
-function reject(id){
+function rejectMsg(id){
   if(confirm("Reject pesan ini?")){
-    socket.emit("reject-message",id);
+    socket.emit("reject-message", id);
   }
 }
 
-/* 🆕 DELETE PERMANEN */
-function del(id){
+function deleteMsg(id){
   if(confirm("HAPUS PERMANEN pesan ini?")){
-    socket.emit("delete-message",id);
+    socket.emit("delete-message", id);
   }
 }
 
 function approveAll(){
   if(busy) return;
   if(confirm("Approve semua pesan?")){
-    busy=true;
-    btnApproveAll.disabled=true;
+    busy = true;
+    btnApproveAll.disabled = true;
     socket.emit("approve-all");
   }
 }
 </script>
+
 
 </body>
 </html>
