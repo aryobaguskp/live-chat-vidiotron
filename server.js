@@ -8,76 +8,114 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-const PORT = 3000;
-const ADMIN_PASSWORD = "admin123";
+/* =========================
+   KONFIGURASI
+========================= */
+const PORT = process.env.PORT || 3000;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const SPAM_DELAY = 5000;
+const BAD_WORDS = ["anjing","bangsat","kontol","memek","goblok"];
 
+/* =========================
+   DATA
+========================= */
 let messages = [];
+let lastMessageTime = {};
 
+/* =========================
+   UTIL
+========================= */
+function filter(text){
+  let r = text;
+  BAD_WORDS.forEach(w=>{
+    r = r.replace(new RegExp(w,"gi"),"****");
+  });
+  return r;
+}
+
+/* =========================
+   SOCKET
+========================= */
 io.on("connection",(socket)=>{
-  console.log("Client connected:", socket.id);
 
+  // kirim pesan approved saat load display
   socket.emit(
     "refresh-messages",
     messages.filter(m=>m.approved)
   );
 
+  /* ===== CUSTOMER ===== */
   socket.on("send-message",(data)=>{
-    if(!data.username || !data.message) return;
+    const { username, message } = data;
+    if(!username || !message) return;
 
-    const msg={
-      id: Date.now(),
-      username: data.username,
-      message: data.message,
-      approved: false
+    const now = Date.now();
+    if(lastMessageTime[socket.id] &&
+       now - lastMessageTime[socket.id] < SPAM_DELAY){
+      socket.emit("spam-warning","Tunggu sebentar");
+      return;
+    }
+    lastMessageTime[socket.id] = now;
+
+    const msg = {
+      id: now,
+      username: filter(username),
+      message: filter(message),
+      approved: false,
+      opacity: 1
     };
 
     messages.push(msg);
-    io.emit("admin-refresh",messages);
+
+    // update admin
+    io.emit("admin-refresh", messages);
   });
 
+  /* ===== ADMIN LOGIN ===== */
   socket.on("admin-login",(pass)=>{
     if(pass === ADMIN_PASSWORD){
       socket.isAdmin = true;
       socket.emit("login-success");
-      socket.emit("admin-refresh",messages);
+      socket.emit("admin-refresh", messages);
     }else{
       socket.emit("login-failed");
     }
   });
 
+  /* ===== ADMIN ACTION ===== */
   socket.on("approve-message",(id)=>{
     if(!socket.isAdmin) return;
-    const m = messages.find(x=>x.id===id);
-    if(m) m.approved = true;
-
-    io.emit("refresh-messages",messages.filter(m=>m.approved));
-    io.emit("admin-refresh",messages);
+    const msg = messages.find(m=>m.id===id);
+    if(msg){
+      msg.approved = true;
+      io.emit("new-message", msg); // realtime ke display
+    }
+    io.emit("admin-refresh", messages);
   });
 
   socket.on("reject-message",(id)=>{
     if(!socket.isAdmin) return;
     messages = messages.filter(m=>m.id!==id);
-
-    io.emit("refresh-messages",messages.filter(m=>m.approved));
-    io.emit("admin-refresh",messages);
+    io.emit("admin-refresh", messages);
   });
 
   socket.on("approve-all",()=>{
     if(!socket.isAdmin) return;
-    messages.forEach(m=>m.approved=true);
-
-    io.emit("refresh-messages",messages.filter(m=>m.approved));
-    io.emit("admin-refresh",messages);
+    messages.forEach(m=>{
+      if(!m.approved){
+        m.approved = true;
+        io.emit("new-message", m);
+      }
+    });
+    io.emit("admin-refresh", messages);
   });
 
-  socket.on("disconnect",()=>{
-    console.log("Client disconnected:", socket.id);
-  });
 });
 
+/* =========================
+   START
+========================= */
 server.listen(PORT,()=>{
-  console.log("LIVE CHAT READY");
-  console.log("OPEN:");
-  console.log("http://localhost:"+PORT+"/admin.html");
-  console.log("http://localhost:"+PORT+"/display.html");
+  console.log("CAFÉ LIVE CHAT READY");
+  console.log("PORT:", PORT);
 });
