@@ -14,6 +14,7 @@ const ADMIN_PASSWORD = "admin123";
 let messages = [];
 
 io.on("connection",(socket)=>{
+  console.log("Client connected:", socket.id);
 
   socket.emit(
     "refresh-messages",
@@ -21,19 +22,22 @@ io.on("connection",(socket)=>{
   );
 
   socket.on("send-message",(data)=>{
+    if(!data.username || !data.message) return;
+
     const msg={
-      id:Date.now(),
-      username:data.username,
-      message:data.message,
-      approved:false
+      id: Date.now(),
+      username: data.username,
+      message: data.message,
+      approved: false
     };
+
     messages.push(msg);
     io.emit("admin-refresh",messages);
   });
 
   socket.on("admin-login",(pass)=>{
-    if(pass===ADMIN_PASSWORD){
-      socket.isAdmin=true;
+    if(pass === ADMIN_PASSWORD){
+      socket.isAdmin = true;
       socket.emit("login-success");
       socket.emit("admin-refresh",messages);
     }else{
@@ -43,15 +47,17 @@ io.on("connection",(socket)=>{
 
   socket.on("approve-message",(id)=>{
     if(!socket.isAdmin) return;
-    const m=messages.find(x=>x.id===id);
-    if(m) m.approved=true;
+    const m = messages.find(x=>x.id===id);
+    if(m) m.approved = true;
+
     io.emit("refresh-messages",messages.filter(m=>m.approved));
     io.emit("admin-refresh",messages);
   });
 
   socket.on("reject-message",(id)=>{
     if(!socket.isAdmin) return;
-    messages=messages.filter(m=>m.id!==id);
+    messages = messages.filter(m=>m.id!==id);
+
     io.emit("refresh-messages",messages.filter(m=>m.approved));
     io.emit("admin-refresh",messages);
   });
@@ -59,11 +65,19 @@ io.on("connection",(socket)=>{
   socket.on("approve-all",()=>{
     if(!socket.isAdmin) return;
     messages.forEach(m=>m.approved=true);
+
     io.emit("refresh-messages",messages.filter(m=>m.approved));
     io.emit("admin-refresh",messages);
+  });
+
+  socket.on("disconnect",()=>{
+    console.log("Client disconnected:", socket.id);
   });
 });
 
 server.listen(PORT,()=>{
-  console.log("LIVE CHAT READY :",PORT);
+  console.log("LIVE CHAT READY");
+  console.log("OPEN:");
+  console.log("http://localhost:"+PORT+"/admin.html");
+  console.log("http://localhost:"+PORT+"/display.html");
 });
