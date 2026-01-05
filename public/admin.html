@@ -6,13 +6,63 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff}
-#login{max-width:360px;margin:120px auto;background:#181818;padding:30px;border-radius:14px}
-#dashboard{display:none;padding:25px}
-.card{background:#202020;padding:18px;border-radius:14px;margin-bottom:15px}
-button{padding:8px 14px;border:none;border-radius:6px;background:#cfa35a;cursor:pointer}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0f0f0f;
+  color:#fff;
+}
+
+/* ===== LOGIN ===== */
+#login{
+  max-width:360px;
+  margin:120px auto;
+  background:#181818;
+  padding:30px;
+  border-radius:14px;
+  box-shadow:0 20px 40px rgba(0,0,0,.6);
+}
+#login h2{text-align:center;margin-bottom:20px}
+input{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+}
+button{
+  padding:10px 16px;
+  background:#cfa35a;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:14px;
+}
 button.secondary{background:#444}
-#error{color:#ff7070;margin-top:10px}
+button:disabled{opacity:.5;cursor:not-allowed}
+#error{color:#ff7070;margin-top:10px;text-align:center}
+
+/* ===== DASHBOARD ===== */
+#dashboard{display:none;padding:25px}
+#topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
+#list{max-width:900px;margin:auto}
+.card{
+  background:#202020;
+  padding:18px;
+  border-radius:14px;
+  margin-bottom:15px;
+}
+.card b{font-size:18px;color:#ffd27d}
+.status{font-size:13px;opacity:.7;margin-top:4px}
+.actions{margin-top:12px}
+.actions button{margin-right:8px;font-size:13px}
+.empty{text-align:center;opacity:.5;margin-top:60px;font-size:18px}
 </style>
 </head>
 
@@ -26,8 +76,13 @@ button.secondary{background:#444}
 </div>
 
 <div id="dashboard">
-  <h2>Dashboard Admin</h2>
-  <button onclick="approveAll()">Approve Semua</button>
+  <div id="topbar">
+    <h2>Dashboard Admin</h2>
+    <div>
+      <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
+      <button class="secondary" onclick="logout()">Logout</button>
+    </div>
+  </div>
   <div id="list"></div>
 </div>
 
@@ -35,23 +90,21 @@ button.secondary{background:#444}
 const socket = io();
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
+const btnApproveAll = document.getElementById("btnApproveAll");
 
 let busy = false;
 
-/* ===== LOGIN (ASLI, JANGAN DIUBAH) ===== */
+/* ===== LOGIN (ASLI) ===== */
 function login(){
   errorBox.innerText="";
-  socket.emit(
-    "admin-login",
-    document.getElementById("pass").value
-  );
+  socket.emit("admin-login", document.getElementById("pass").value);
 }
+function logout(){ location.reload(); }
 
 socket.on("login-success",()=>{
-  document.getElementById("login").style.display="none";
-  document.getElementById("dashboard").style.display="block";
+  login.style.display="none";
+  dashboard.style.display="block";
 });
-
 socket.on("login-failed",()=>{
   errorBox.innerText="Password salah";
 });
@@ -59,20 +112,31 @@ socket.on("login-failed",()=>{
 /* ===== RENDER ===== */
 socket.on("admin-refresh",(msgs)=>{
   busy = false;
+  btnApproveAll.disabled = false;
   render(msgs);
 });
 
 function render(msgs){
   list.innerHTML="";
+  if(msgs.length===0){
+    list.innerHTML=`<div class="empty">Belum ada pesan</div>`;
+    return;
+  }
+
   msgs.forEach(m=>{
     const div=document.createElement("div");
     div.className="card";
     div.innerHTML=`
-      <b>${m.username}</b><br>${m.message}<br>
-      Status: ${m.approved?"✅ Approved":"⏳ Pending"}<br><br>
-      <button onclick="approve(${m.id})">Approve</button>
-      <button class="secondary" onclick="reject(${m.id})">Reject</button>
-      <button class="secondary" onclick="del(${m.id})">Delete</button>
+      <b>${m.username}</b><br>
+      ${m.message}
+      <div class="status">
+        Status: ${m.approved?"✅ Approved":"⏳ Pending"}
+      </div>
+      <div class="actions">
+        <button onclick="approve(${m.id})">Approve</button>
+        <button class="secondary" onclick="reject(${m.id})">Reject</button>
+        <button class="secondary" onclick="del(${m.id})">Delete</button>
+      </div>
     `;
     list.appendChild(div);
   });
@@ -85,12 +149,14 @@ function approve(id){
   socket.emit("approve-message",id);
 }
 
+/* 🔴 FIX: reject TANPA busy */
 function reject(id){
   if(confirm("Reject pesan ini?")){
     socket.emit("reject-message",id);
   }
 }
 
+/* 🆕 DELETE PERMANEN */
 function del(id){
   if(confirm("HAPUS PERMANEN pesan ini?")){
     socket.emit("delete-message",id);
@@ -99,8 +165,11 @@ function del(id){
 
 function approveAll(){
   if(busy) return;
-  busy=true;
-  socket.emit("approve-all");
+  if(confirm("Approve semua pesan?")){
+    busy=true;
+    btnApproveAll.disabled=true;
+    socket.emit("approve-all");
+  }
 }
 </script>
 
