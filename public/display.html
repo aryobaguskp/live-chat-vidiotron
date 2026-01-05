@@ -6,106 +6,37 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
-body{
-  margin:0;
-  background:black;
-  color:white;
-  font-family:Arial,Helvetica,sans-serif;
-  overflow:hidden;
-}
-
-/* HEADER */
-#header{
-  position:absolute;
-  top:20px;
-  left:40px;
-  right:40px;
-  display:flex;
-  align-items:center;
-  gap:20px;
-}
-
-#header img{
-  height:60px;
-}
-
-#header h1{
-  margin:0;
-  font-size:36px;
-  letter-spacing:2px;
-}
-
-/* CHAT AREA */
-#messages{
-  position:absolute;
-  bottom:40px;
-  left:40px;
-  right:40px;
-  max-height:70vh;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-}
-
-.msg{
-  margin-top:18px;
-  font-size:30px;
-  animation: slideUp .6s ease-out;
-}
-
-.msg b{
-  color:#ffd27d;
-}
-
-@keyframes slideUp{
-  from{
-    transform:translateY(40px);
-    opacity:0;
-  }
-  to{
-    transform:translateY(0);
-    opacity:1;
-  }
-}
+body{margin:0;background:black;color:white;font-family:Arial}
+#messages{position:absolute;bottom:40px;left:40px;right:40px}
+.msg{margin-top:18px;font-size:28px}
+.msg b{color:#ffd27d}
 </style>
 </head>
 
 <body>
-
-<div id="header">
-  <img src="logo.png">
-  <h1>LIVE CHAT CAFÉ</h1>
-</div>
 
 <div id="messages"></div>
 
 <script>
 const socket = io();
 const box = document.getElementById("messages");
-const MAX_MESSAGES = 6;
+const MAX = 10;
 
-/* RENDER AWAL */
 socket.on("refresh-messages",(msgs)=>{
   box.innerHTML="";
-  msgs.slice(-MAX_MESSAGES).forEach(addMessage);
+  msgs.slice(-MAX).forEach(add);
 });
 
-/* PESAN BARU */
 socket.on("new-message",(msg)=>{
-  addMessage(msg);
+  add(msg);
 });
 
-/* FUNGSI TAMBAH PESAN */
-function addMessage(msg){
-  const div = document.createElement("div");
-  div.className="msg";
-  div.style.opacity = msg.opacity || 1;
-  div.innerHTML = `<b>${msg.username}</b>: ${msg.message}`;
-  box.appendChild(div);
-
-  // jika penuh → buang yg paling atas
-  if(box.children.length > MAX_MESSAGES){
+function add(msg){
+  const d=document.createElement("div");
+  d.className="msg";
+  d.innerHTML=`<b>${msg.username}</b>: ${msg.message}`;
+  box.appendChild(d);
+  if(box.children.length>MAX){
     box.removeChild(box.children[0]);
   }
 }
