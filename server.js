@@ -110,6 +110,27 @@ io.on("connection",(socket)=>{
     io.emit("admin-refresh", messages);
   });
 
+  /* ===== REJECT (HAPUS DARI QUEUE) ===== */
+socket.on("reject-message",(id)=>{
+  if(!socket.isAdmin) return;
+
+  messages = messages.filter(m=>m.id !== id);
+
+  io.emit("admin-refresh", messages);
+  io.emit("refresh-messages", messages.filter(m=>m.approved));
+});
+
+/* ===== DELETE PERMANEN ===== */
+socket.on("delete-message",(id)=>{
+  if(!socket.isAdmin) return;
+
+  messages = messages.filter(m=>m.id !== id);
+
+  io.emit("admin-refresh", messages);
+  io.emit("refresh-messages", messages.filter(m=>m.approved));
+});
+
+
 });
 
 /* =========================

@@ -133,52 +133,40 @@ button:disabled{
   <div id="list"></div>
 </div>
 
+<!-- POTONGAN SCRIPT SAJA (GANTI BAGIAN ACTIONS & FUNCTIONS) -->
+
 <script>
 const socket = io();
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 const btnApproveAll = document.getElementById("btnApproveAll");
 
-/* =========================
-   STATE (ANTI FREEZE)
-========================= */
 let busy = false;
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 function login(){
   errorBox.innerText="";
-  socket.emit("admin-login", document.getElementById("pass").value);
-}
-
-function logout(){
-  location.reload();
+  socket.emit("admin-login", pass.value);
 }
 
 socket.on("login-success",()=>{
-  document.getElementById("login").style.display="none";
-  document.getElementById("dashboard").style.display="block";
+  login.style.display="none";
+  dashboard.style.display="block";
 });
 
 socket.on("login-failed",()=>{
   errorBox.innerText="Password salah";
 });
 
-/* =========================
-   RENDER ADMIN (STABIL)
-========================= */
+/* RENDER */
 socket.on("admin-refresh",(msgs)=>{
-  requestAnimationFrame(()=>{
-    busy = false;                 // 🔴 KUNCI UTAMA
-    btnApproveAll.disabled = false;
-    render(msgs);
-  });
+  busy = false;
+  btnApproveAll.disabled = false;
+  render(msgs);
 });
 
 function render(msgs){
   list.innerHTML="";
-
   if(msgs.length === 0){
     list.innerHTML = `<div class="empty">Belum ada pesan</div>`;
     return;
@@ -195,27 +183,30 @@ function render(msgs){
       </div>
       <div class="actions">
         <button onclick="approve(${m.id})">Approve</button>
-        <button class="secondary" onclick="reject(${m.id})">Reject</button>
+        <button class="secondary" onclick="rejectMsg(${m.id})">Reject</button>
+        <button class="secondary" onclick="deleteMsg(${m.id})">Delete</button>
       </div>
     `;
     list.appendChild(div);
   });
 }
 
-/* =========================
-   ACTIONS (ANTI DOUBLE CLICK)
-========================= */
+/* ACTIONS */
 function approve(id){
   if(busy) return;
   busy = true;
   socket.emit("approve-message", id);
 }
 
-function reject(id){
-  if(busy) return;
-  if(confirm("Hapus pesan ini?")){
-    busy = true;
+function rejectMsg(id){
+  if(confirm("Reject pesan ini?")){
     socket.emit("reject-message", id);
+  }
+}
+
+function deleteMsg(id){
+  if(confirm("HAPUS PERMANEN pesan ini?")){
+    socket.emit("delete-message", id);
   }
 }
 
@@ -228,6 +219,7 @@ function approveAll(){
   }
 }
 </script>
+
 
 </body>
 </html>
