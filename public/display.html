@@ -91,11 +91,6 @@ socket.on("refresh-messages",(msgs)=>{
   msgs.slice(-MAX_MESSAGES).forEach(addMessage);
 });
 
-/* PESAN BARU */
-socket.on("new-message",(msg)=>{
-  addMessage(msg);
-});
-
 /* FUNGSI TAMBAH PESAN */
 function addMessage(msg){
   const div = document.createElement("div");

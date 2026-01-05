@@ -84,31 +84,52 @@ io.on("connection",(socket)=>{
 
   /* ===== ADMIN ACTION ===== */
   socket.on("approve-message",(id)=>{
-    if(!socket.isAdmin) return;
-    const msg = messages.find(m=>m.id===id);
-    if(msg){
-      msg.approved = true;
-      io.emit("new-message", msg); // realtime ke display
-    }
-    io.emit("admin-refresh", messages);
-  });
+  if(!socket.isAdmin) return;
+
+  const msg = messages.find(m=>m.id===id);
+  if(msg){
+    msg.approved = true;
+  }
+
+  io.emit(
+    "refresh-messages",
+    messages.filter(m=>m.approved)
+  );
+
+  io.emit("admin-refresh", messages);
+});
+
 
   socket.on("reject-message",(id)=>{
-    if(!socket.isAdmin) return;
-    messages = messages.filter(m=>m.id!==id);
-    io.emit("admin-refresh", messages);
-  });
+  if(!socket.isAdmin) return;
+
+  messages = messages.filter(m=>m.id!==id);
+
+  io.emit(
+    "refresh-messages",
+    messages.filter(m=>m.approved)
+  );
+
+  io.emit("admin-refresh", messages);
+});
+
 
   socket.on("approve-all",()=>{
-    if(!socket.isAdmin) return;
-    messages.forEach(m=>{
-      if(!m.approved){
-        m.approved = true;
-        io.emit("new-message", m);
-      }
-    });
-    io.emit("admin-refresh", messages);
+  if(!socket.isAdmin) return;
+
+  messages.forEach(m=>{
+    m.approved = true;
   });
+
+  // kirim ulang SEMUA pesan approved SEKALI
+  io.emit(
+    "refresh-messages",
+    messages.filter(m=>m.approved)
+  );
+
+  io.emit("admin-refresh", messages);
+});
+
 
 });
 
