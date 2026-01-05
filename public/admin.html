@@ -2,19 +2,19 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Admin Live Chat Café</title>
+<title>Admin Dashboard – Live Chat Café</title>
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
 body{
   margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:linear-gradient(135deg,#0f0f0f,#1a1a1a);
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0f0f0f;
   color:#fff;
 }
 
 /* ===== LOGIN ===== */
-#login-box{
+#login{
   max-width:360px;
   margin:120px auto;
   background:#181818;
@@ -22,12 +22,10 @@ body{
   border-radius:14px;
   box-shadow:0 20px 40px rgba(0,0,0,.6);
 }
-
-#login-box h2{
+#login h2{
   text-align:center;
   margin-bottom:20px;
 }
-
 input{
   width:100%;
   padding:12px;
@@ -36,23 +34,24 @@ input{
   border-radius:8px;
   font-size:16px;
 }
-
 button{
   padding:10px 16px;
   background:#cfa35a;
   border:none;
   border-radius:8px;
-  font-size:14px;
   cursor:pointer;
+  font-size:14px;
 }
-
 button.secondary{
   background:#444;
 }
-
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
 #error{
-  margin-top:10px;
   color:#ff7070;
+  margin-top:10px;
   text-align:center;
 }
 
@@ -61,19 +60,16 @@ button.secondary{
   display:none;
   padding:25px;
 }
-
 #topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:25px;
 }
-
 #topbar h2{
   margin:0;
 }
-
-#actions-top button{
+#topbar button{
   margin-left:8px;
 }
 
@@ -89,29 +85,21 @@ button.secondary{
   margin-bottom:15px;
   box-shadow:0 10px 25px rgba(0,0,0,.4);
 }
-
 .card b{
   font-size:18px;
-  color:#ffd28a;
+  color:#ffd27d;
 }
-
 .status{
   font-size:13px;
   opacity:.7;
+  margin-top:4px;
 }
-
 .actions{
   margin-top:12px;
 }
-
 .actions button{
   margin-right:8px;
   font-size:13px;
-}
-
-input[type=range]{
-  width:100%;
-  margin-top:8px;
 }
 
 .empty{
@@ -126,12 +114,10 @@ input[type=range]{
 <body>
 
 <!-- LOGIN -->
-<div id="login-box">
+<div id="login">
   <h2>Admin Login</h2>
   <input id="pass" type="password" placeholder="Password admin">
-  <button style="width:100%;margin-top:15px" onclick="login()">
-    Masuk Dashboard
-  </button>
+  <button style="width:100%;margin-top:15px" onclick="login()">Masuk Dashboard</button>
   <div id="error"></div>
 </div>
 
@@ -139,12 +125,11 @@ input[type=range]{
 <div id="dashboard">
   <div id="topbar">
     <h2>Dashboard Admin</h2>
-    <div id="actions-top">
-      <button onclick="approveAll()">Approve Semua</button>
+    <div>
+      <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
       <button class="secondary" onclick="logout()">Logout</button>
     </div>
   </div>
-
   <div id="list"></div>
 </div>
 
@@ -152,20 +137,27 @@ input[type=range]{
 const socket = io();
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
+const btnApproveAll = document.getElementById("btnApproveAll");
 
-/* ===== LOGIN ===== */
+/* =========================
+   STATE (ANTI FREEZE)
+========================= */
+let busy = false;
+
+/* =========================
+   LOGIN
+========================= */
 function login(){
   errorBox.innerText="";
   socket.emit("admin-login", document.getElementById("pass").value);
 }
 
 function logout(){
-  socket.emit("admin-logout");
   location.reload();
 }
 
 socket.on("login-success",()=>{
-  document.getElementById("login-box").style.display="none";
+  document.getElementById("login").style.display="none";
   document.getElementById("dashboard").style.display="block";
 });
 
@@ -173,52 +165,65 @@ socket.on("login-failed",()=>{
   errorBox.innerText="Password salah";
 });
 
-/* ===== DATA ===== */
-socket.on("admin-refresh",msgs=>{
+/* =========================
+   RENDER ADMIN (STABIL)
+========================= */
+socket.on("admin-refresh",(msgs)=>{
+  requestAnimationFrame(()=>{
+    busy = false;                 // 🔴 KUNCI UTAMA
+    btnApproveAll.disabled = false;
+    render(msgs);
+  });
+});
+
+function render(msgs){
   list.innerHTML="";
 
-  if(msgs.length===0){
-    list.innerHTML=`<div class="empty">Belum ada pesan masuk</div>`;
+  if(msgs.length === 0){
+    list.innerHTML = `<div class="empty">Belum ada pesan</div>`;
     return;
   }
 
   msgs.forEach(m=>{
-    const d=document.createElement("div");
-    d.className="card";
-    d.innerHTML=`
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
       <b>${m.username}</b><br>
-      ${m.message}<br>
+      ${m.message}
       <div class="status">
         Status: ${m.approved ? "✅ Approved" : "⏳ Pending"}
       </div>
-
       <div class="actions">
         <button onclick="approve(${m.id})">Approve</button>
         <button class="secondary" onclick="reject(${m.id})">Reject</button>
       </div>
-
-      Opacity:
-      <input type="range" min="0.2" max="1" step="0.1"
-        value="${m.opacity}"
-        onchange="opacity(${m.id},this.value)">
     `;
-    list.appendChild(d);
+    list.appendChild(div);
   });
-});
+}
 
-/* ===== ACTIONS ===== */
+/* =========================
+   ACTIONS (ANTI DOUBLE CLICK)
+========================= */
 function approve(id){
-  socket.emit("approve-message",id);
+  if(busy) return;
+  busy = true;
+  socket.emit("approve-message", id);
 }
 
 function reject(id){
+  if(busy) return;
   if(confirm("Hapus pesan ini?")){
-    socket.emit("reject-message",id);
+    busy = true;
+    socket.emit("reject-message", id);
   }
 }
 
 function approveAll(){
-  if(confirm("Approve SEMUA pesan ke videotron?")){
+  if(busy) return;
+  if(confirm("Approve semua pesan?")){
+    busy = true;
+    btnApproveAll.disabled = true;
     socket.emit("approve-all");
   }
 }
