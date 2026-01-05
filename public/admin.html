@@ -2,17 +2,17 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard</title>
+<title>Admin Dashboard – Live Chat Café</title>
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#111;color:#fff}
+body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff}
 #login{max-width:360px;margin:120px auto;background:#181818;padding:30px;border-radius:14px}
-input{width:100%;padding:12px;margin-top:10px;border-radius:8px;border:none}
-button{margin-top:12px;padding:10px 16px;border:none;border-radius:8px;background:#cfa35a;cursor:pointer}
-button.secondary{background:#444}
 #dashboard{display:none;padding:25px}
-.card{background:#202020;padding:16px;border-radius:12px;margin-bottom:12px}
+.card{background:#202020;padding:18px;border-radius:14px;margin-bottom:15px}
+button{padding:8px 14px;border:none;border-radius:6px;background:#cfa35a;cursor:pointer}
+button.secondary{background:#444}
+#error{color:#ff7070;margin-top:10px}
 </style>
 </head>
 
@@ -21,7 +21,7 @@ button.secondary{background:#444}
 <div id="login">
   <h2>Admin Login</h2>
   <input id="pass" type="password" placeholder="Password admin">
-  <button onclick="login()">Masuk</button>
+  <button style="width:100%;margin-top:15px" onclick="login()">Masuk Dashboard</button>
   <div id="error"></div>
 </div>
 
@@ -34,21 +34,29 @@ button.secondary{background:#444}
 <script>
 const socket = io();
 const list = document.getElementById("list");
+const errorBox = document.getElementById("error");
+
 let busy = false;
 
+/* ===== LOGIN (ASLI, JANGAN DIUBAH) ===== */
 function login(){
-  socket.emit("admin-login", pass.value);
+  errorBox.innerText="";
+  socket.emit(
+    "admin-login",
+    document.getElementById("pass").value
+  );
 }
 
 socket.on("login-success",()=>{
-  login.style.display="none";
-  dashboard.style.display="block";
+  document.getElementById("login").style.display="none";
+  document.getElementById("dashboard").style.display="block";
 });
 
 socket.on("login-failed",()=>{
-  error.innerText="Password salah";
+  errorBox.innerText="Password salah";
 });
 
+/* ===== RENDER ===== */
 socket.on("admin-refresh",(msgs)=>{
   busy = false;
   render(msgs);
@@ -57,31 +65,41 @@ socket.on("admin-refresh",(msgs)=>{
 function render(msgs){
   list.innerHTML="";
   msgs.forEach(m=>{
-    const d=document.createElement("div");
-    d.className="card";
-    d.innerHTML=`
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
       <b>${m.username}</b><br>${m.message}<br>
-      Status: ${m.approved?"✅ Approved":"⏳ Pending"}<br>
+      Status: ${m.approved?"✅ Approved":"⏳ Pending"}<br><br>
       <button onclick="approve(${m.id})">Approve</button>
-      <button class="secondary" onclick="rejectMsg(${m.id})">Reject</button>
+      <button class="secondary" onclick="reject(${m.id})">Reject</button>
+      <button class="secondary" onclick="del(${m.id})">Delete</button>
     `;
-    list.appendChild(d);
+    list.appendChild(div);
   });
 }
 
+/* ===== ACTIONS ===== */
 function approve(id){
   if(busy) return;
   busy=true;
   socket.emit("approve-message",id);
 }
 
-function rejectMsg(id){
-  if(confirm("Hapus pesan ini?")){
+function reject(id){
+  if(confirm("Reject pesan ini?")){
     socket.emit("reject-message",id);
   }
 }
 
+function del(id){
+  if(confirm("HAPUS PERMANEN pesan ini?")){
+    socket.emit("delete-message",id);
+  }
+}
+
 function approveAll(){
+  if(busy) return;
+  busy=true;
   socket.emit("approve-all");
 }
 </script>

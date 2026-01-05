@@ -20,23 +20,18 @@ body{margin:0;background:black;color:white;font-family:Arial}
 <script>
 const socket = io();
 const box = document.getElementById("messages");
-const MAX = 12;
+const MAX = 10;
 
 socket.on("refresh-messages",(msgs)=>{
   box.innerHTML="";
-  msgs.slice(-MAX).forEach(addMessage);
+  msgs.slice(-MAX).forEach(add);
 });
 
 socket.on("new-message",(msg)=>{
-  addMessage(msg);
+  add(msg);
 });
 
-socket.on("display-refresh",(msgs)=>{
-  box.innerHTML="";
-  msgs.slice(-MAX).forEach(addMessage);
-});
-
-function addMessage(msg){
+function add(msg){
   const d=document.createElement("div");
   d.className="msg";
   d.innerHTML=`<b>${msg.username}</b>: ${msg.message}`;

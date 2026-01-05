@@ -4,23 +4,27 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// 🔴 PENTING UNTUK RAILWAY
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
 
 app.use(express.static("public"));
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const SPAM_DELAY = 5000;
 
 let messages = [];
 let lastMessageTime = {};
-const SPAM_DELAY = 5000;
 
 io.on("connection",(socket)=>{
 
-  // kirim pesan approved saat display load
+  // kirim pesan approved saat display connect
   socket.emit(
     "refresh-messages",
-    messages.filter(m=>m.approved)
+    messages.filter(m => m.approved)
   );
 
   /* ===== CUSTOMER ===== */
@@ -46,7 +50,7 @@ io.on("connection",(socket)=>{
     io.emit("admin-refresh", messages);
   });
 
-  /* ===== ADMIN LOGIN ===== */
+  /* ===== ADMIN LOGIN (JANGAN DIUBAH) ===== */
   socket.on("admin-login",(pass)=>{
     if(pass === ADMIN_PASSWORD){
       socket.isAdmin = true;
@@ -57,14 +61,14 @@ io.on("connection",(socket)=>{
     }
   });
 
-  /* ===== APPROVE SATU ===== */
+  /* ===== APPROVE ===== */
   socket.on("approve-message",(id)=>{
     if(!socket.isAdmin) return;
 
-    const msg = messages.find(m=>m.id===id);
+    const msg = messages.find(m=>m.id === id);
     if(msg && !msg.approved){
       msg.approved = true;
-      io.emit("new-message", msg); // realtime
+      io.emit("new-message", msg);
     }
 
     io.emit("admin-refresh", messages);
@@ -74,20 +78,38 @@ io.on("connection",(socket)=>{
   socket.on("reject-message",(id)=>{
     if(!socket.isAdmin) return;
 
-    messages = messages.filter(m=>m.id!==id);
+    messages = messages.filter(m => m.id !== id);
 
     io.emit("admin-refresh", messages);
-    io.emit("display-refresh", messages.filter(m=>m.approved));
+    io.emit(
+      "refresh-messages",
+      messages.filter(m => m.approved)
+    );
+  });
+
+  /* ===== DELETE PERMANEN ===== */
+  socket.on("delete-message",(id)=>{
+    if(!socket.isAdmin) return;
+
+    messages = messages.filter(m => m.id !== id);
+
+    io.emit("admin-refresh", messages);
+    io.emit(
+      "refresh-messages",
+      messages.filter(m => m.approved)
+    );
   });
 
   /* ===== APPROVE ALL (ANTI FREEZE) ===== */
   socket.on("approve-all",()=>{
     if(!socket.isAdmin) return;
 
-    messages.forEach(m=>m.approved = true);
+    messages.forEach(m => m.approved = true);
 
-    // refresh display SEKALI
-    io.emit("display-refresh", messages.filter(m=>m.approved));
+    io.emit(
+      "refresh-messages",
+      messages.filter(m => m.approved)
+    );
     io.emit("admin-refresh", messages);
   });
 
