@@ -104,16 +104,23 @@ io.on("connection",(socket)=>{
 
   /* ===== APPROVE ALL (ANTI FREEZE) ===== */
   socket.on("approve-all",()=>{
-    if(!socket.isAdmin) return;
+  if(!socket.isAdmin) return;
 
-    messages.forEach(m => m.approved = true);
+  // ambil pesan yang belum approved
+  const pending = messages.filter(m => !m.approved);
 
-    io.emit(
-      "refresh-messages",
-      messages.filter(m => m.approved)
-    );
-    io.emit("admin-refresh", messages);
+  pending.forEach((msg, i)=>{
+    setTimeout(()=>{
+      msg.approved = true;
+      io.emit("new-message", msg);
+
+      // refresh admin di akhir
+      if(i === pending.length - 1){
+        io.emit("admin-refresh", messages);
+      }
+    }, i * 600); // ⏱ delay 600ms per pesan
   });
+});
 
   /* ===== Baground Opacity ===== */
   socket.emit("display-bg-opacity", displayBgOpacity);
