@@ -18,6 +18,8 @@ const SPAM_DELAY = 5000;
 
 let messages = [];
 let lastMessageTime = {};
+let displayBgOpacity = 0.55; 
+
 
 io.on("connection",(socket)=>{
 
@@ -111,6 +113,15 @@ io.on("connection",(socket)=>{
       messages.filter(m => m.approved)
     );
     io.emit("admin-refresh", messages);
+  });
+
+  /* ===== Baground Opacity ===== */
+  socket.emit("display-bg-opacity", displayBgOpacity);
+
+  socket.on("set-display-bg-opacity", (val)=>{
+  if(!socket.isAdmin) return;
+  displayBgOpacity = val;
+  io.emit("display-bg-opacity", displayBgOpacity);
   });
 
 });

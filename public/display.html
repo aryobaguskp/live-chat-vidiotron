@@ -9,6 +9,22 @@
 /* ===== RESET ===== */
 *{box-sizing:border-box}
 
+/* ===== BACKGROUND LAYER ===== */
+#bg{
+  position:fixed;
+  inset:0;
+  background:url("bg-display.jpg") center/cover no-repeat;
+  z-index:-2;
+}
+#overlay{
+  position:fixed;
+  inset:0;
+  background:black;
+  opacity:.55;
+  z-index:-1;
+  transition:opacity .3s ease;
+}
+
 /* ===== GLOBAL ===== */
 body{
   margin:0;
@@ -118,6 +134,10 @@ body{
 
 <body>
 
+<div id="bg"></div>
+<div id="overlay"></div>
+
+
 <!-- HEADER -->
 <div id="header">
   <img src="logo.png" alt="Logo Café">
@@ -143,6 +163,12 @@ const socket = io();
 const box = document.getElementById("messages");
 const clock = document.getElementById("clock");
 const MAX_MESSAGES = 8;
+const overlay = document.getElementById("overlay");
+
+socket.on("display-bg-opacity",(val)=>{
+  overlay.style.opacity = val;
+});
+
 
 /* ===== JAM REALTIME ===== */
 setInterval(()=>{

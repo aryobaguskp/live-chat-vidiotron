@@ -6,26 +6,20 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
-/* ===== GLOBAL ===== */
 body{
   margin:0;
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family:"Segoe UI",Arial,sans-serif;
   background:#0f0f0f;
   color:#fff;
 }
 
-/* ===== LOGIN ===== */
+/* LOGIN */
 #login{
   max-width:380px;
   margin:120px auto;
   background:#181818;
   padding:35px;
   border-radius:16px;
-  box-shadow:0 25px 50px rgba(0,0,0,.6);
-}
-#login h2{
-  text-align:center;
-  margin-bottom:20px;
 }
 input{
   width:100%;
@@ -33,7 +27,6 @@ input{
   margin-top:10px;
   border:none;
   border-radius:8px;
-  font-size:15px;
 }
 button{
   padding:10px 16px;
@@ -41,25 +34,17 @@ button{
   border:none;
   border-radius:8px;
   cursor:pointer;
-  font-size:14px;
 }
-button.secondary{ background:#3b3b3b }
-button:disabled{ opacity:.5; cursor:not-allowed }
-#error{
-  color:#ff7070;
-  margin-top:12px;
-  text-align:center;
-  font-size:14px;
-}
+button.secondary{background:#444}
+#error{color:#ff7070;margin-top:10px;text-align:center}
 
-/* ===== DASHBOARD ===== */
-#dashboard{ display:none }
+/* DASHBOARD */
+#dashboard{display:none}
 
-/* TOP BAR */
 #topbar{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   padding:18px 30px;
   background:#141414;
   border-bottom:1px solid #222;
@@ -69,22 +54,12 @@ button:disabled{ opacity:.5; cursor:not-allowed }
   align-items:center;
   gap:14px;
 }
-#brand img{
-  height:42px;
-}
-#brand h1{
-  font-size:20px;
-  margin:0;
-  letter-spacing:1px;
-}
-#top-actions button{
-  margin-left:8px;
-}
+#brand img{height:40px}
 
-/* CONTENT */
 #content{
   padding:30px;
 }
+
 #list{
   max-width:900px;
   margin:auto;
@@ -96,30 +71,30 @@ button:disabled{ opacity:.5; cursor:not-allowed }
   padding:18px;
   border-radius:14px;
   margin-bottom:16px;
-  box-shadow:0 10px 25px rgba(0,0,0,.35);
 }
-.card b{
-  font-size:17px;
-  color:#ffd27d;
-}
-.status{
-  font-size:13px;
-  opacity:.75;
-  margin-top:6px;
-}
-.actions{
-  margin-top:14px;
-}
-.actions button{
-  margin-right:8px;
-  font-size:13px;
-}
+.card b{color:#ffd27d}
+.status{font-size:13px;opacity:.7;margin-top:6px}
+.actions{margin-top:12px}
+.actions button{margin-right:8px}
 
 .empty{
   text-align:center;
   opacity:.5;
   margin-top:80px;
   font-size:18px;
+}
+
+/* OPACITY BOX */
+#bg-setting{
+  max-width:900px;
+  margin:0 auto 25px auto;
+  background:#1a1a1a;
+  padding:16px;
+  border-radius:12px;
+}
+#bg-setting label{
+  font-size:13px;
+  opacity:.7;
 }
 </style>
 </head>
@@ -128,55 +103,65 @@ button:disabled{ opacity:.5; cursor:not-allowed }
 
 <!-- LOGIN -->
 <div id="login">
-  <h2>Admin Login</h2>
+  <h2 style="text-align:center">Admin Login</h2>
   <input id="pass" type="password" placeholder="Password admin">
-  <button style="width:100%;margin-top:18px" onclick="login()">
-    Masuk Dashboard
-  </button>
+  <button style="width:100%;margin-top:15px" onclick="login()">Masuk Dashboard</button>
   <div id="error"></div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard">
 
-  <!-- TOP BAR -->
   <div id="topbar">
     <div id="brand">
-      <img src="logo.png" alt="Logo Café">
-      <h1>Live Chat Café – Admin</h1>
+      <img src="logo.png">
+      <b>Live Chat Café – Admin</b>
     </div>
-    <div id="top-actions">
+    <div>
       <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
       <button class="secondary" onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <!-- CONTENT -->
   <div id="content">
-    <div id="list"></div>
-  </div>
 
+    <!-- ✅ SETTING OPACITY (AMAN) -->
+    <div id="bg-setting">
+      <label>Opacity Background Display</label>
+      <input
+        type="range"
+        id="bgOpacity"
+        min="0"
+        max="0.9"
+        step="0.05"
+        value="0.55"
+        style="width:100%"
+      >
+    </div>
+
+    <!-- LIST PESAN -->
+    <div id="list"></div>
+
+  </div>
 </div>
 
 <script>
 const socket = io();
 
+/* ELEMENT */
 const loginBox = document.getElementById("login");
 const dashboardBox = document.getElementById("dashboard");
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 const btnApproveAll = document.getElementById("btnApproveAll");
-
+const bgOpacity = document.getElementById("bgOpacity");
 
 let busy = false;
 
-/* ===== LOGIN (STABIL) ===== */
+/* LOGIN */
 function login(){
-  errorBox.innerText = "";
-  socket.emit(
-    "admin-login",
-    document.getElementById("pass").value
-  );
+  errorBox.innerText="";
+  socket.emit("admin-login", document.getElementById("pass").value);
 }
 function logout(){
   location.reload();
@@ -190,18 +175,29 @@ socket.on("login-failed",()=>{
   errorBox.innerText="Password salah";
 });
 
-/* ===== RENDER ===== */
+/* OPACITY SYNC */
+bgOpacity.oninput = ()=>{
+  socket.emit(
+    "set-display-bg-opacity",
+    parseFloat(bgOpacity.value)
+  );
+};
+
+socket.on("display-bg-opacity",(val)=>{
+  bgOpacity.value = val;
+});
+
+/* RENDER */
 socket.on("admin-refresh",(msgs)=>{
-  busy = false;
-  btnApproveAll.disabled = false;
+  busy=false;
+  btnApproveAll.disabled=false;
   render(msgs);
 });
 
 function render(msgs){
   list.innerHTML="";
-
-  if(msgs.length === 0){
-    list.innerHTML = `<div class="empty">Belum ada pesan</div>`;
+  if(msgs.length===0){
+    list.innerHTML='<div class="empty">Belum ada pesan</div>';
     return;
   }
 
@@ -212,7 +208,7 @@ function render(msgs){
       <b>${m.username}</b><br>
       ${m.message}
       <div class="status">
-        Status: ${m.approved ? "✅ Approved" : "⏳ Pending"}
+        Status: ${m.approved?"✅ Approved":"⏳ Pending"}
       </div>
       <div class="actions">
         <button onclick="approve(${m.id})">Approve</button>
@@ -224,27 +220,27 @@ function render(msgs){
   });
 }
 
-/* ===== ACTIONS ===== */
+/* ACTIONS */
 function approve(id){
   if(busy) return;
-  busy = true;
-  socket.emit("approve-message", id);
+  busy=true;
+  socket.emit("approve-message",id);
 }
 function rejectMsg(id){
   if(confirm("Reject pesan ini?")){
-    socket.emit("reject-message", id);
+    socket.emit("reject-message",id);
   }
 }
 function deleteMsg(id){
-  if(confirm("Hapus pesan ini secara permanen?")){
-    socket.emit("delete-message", id);
+  if(confirm("Hapus pesan ini?")){
+    socket.emit("delete-message",id);
   }
 }
 function approveAll(){
   if(busy) return;
   if(confirm("Approve semua pesan?")){
-    busy = true;
-    btnApproveAll.disabled = true;
+    busy=true;
+    btnApproveAll.disabled=true;
     socket.emit("approve-all");
   }
 }
