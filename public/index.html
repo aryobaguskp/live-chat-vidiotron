@@ -1,49 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Live Chat Café</title>
 <script src="/socket.io/socket.io.js"></script>
+
 <style>
-body{font-family:Arial;background:#f5f5f5;padding:20px}
-input,button{width:100%;padding:14px;margin-top:10px;font-size:16px}
-button{background:#6b4f2c;color:#fff;border:none}
-#info{color:red;margin-top:10px}
+/* ===== GLOBAL ===== */
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:"Segoe UI",Arial,sans-serif;
+
+  /* 🔴 BACKGROUND GAMBAR */
+  background:
+    linear-gradient(
+      rgba(0,0,0,.55),
+      rgba(0,0,0,.55)
+    ),
+    url("bg cafe.png") center / cover no-repeat fixed;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ===== CARD ===== */
+#card{
+  width:100%;
+  max-width:420px;
+  background:rgba(255,255,255,.95);
+  padding:28px;
+  border-radius:18px;
+  box-shadow:0 25px 45px rgba(0,0,0,.35);
+}
+
+/* ===== HEADER ===== */
+#card h2{
+  margin:0 0 8px 0;
+  text-align:center;
+  color:#6b4f2c;
+  font-size:24px;
+}
+#card p{
+  text-align:center;
+  margin:0 0 22px 0;
+  font-size:14px;
+  opacity:.7;
+}
+
+/* ===== FORM ===== */
+input{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  font-size:15px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  outline:none;
+}
+input:focus{
+  border-color:#6b4f2c;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:18px;
+  font-size:16px;
+  background:#6b4f2c;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  transition:.2s;
+}
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+button:hover:not(:disabled){
+  background:#5a4022;
+}
+
+/* ===== INFO ===== */
+#info{
+  margin-top:14px;
+  font-size:14px;
+  color:#c0392b;
+  text-align:center;
+}
+
+/* ===== FOOTER ===== */
+#footer{
+  margin-top:22px;
+  text-align:center;
+  font-size:12px;
+  opacity:.6;
+}
 </style>
 </head>
+
 <body>
 
-<h2>☕ Kirim Pesan</h2>
-<input id="username" placeholder="Nama kamu" maxlength="15">
-<input id="message" placeholder="Pesan" maxlength="60">
-<button id="btn">Kirim</button>
-<div id="info"></div>
+<div id="card">
+  <h2>☕ Live Chat Café</h2>
+  <p>Kirim pesan kamu, akan tampil di layar café</p>
+
+  <input id="username" placeholder="Nama kamu" maxlength="15">
+  <input id="message" placeholder="Pesan kamu" maxlength="60">
+  <button id="btn">Kirim Pesan</button>
+
+  <div id="info"></div>
+
+  <div id="footer">
+    Gunakan bahasa yang sopan
+  </div>
+</div>
 
 <script>
 const socket = io();
-let locked=false;
+let locked = false;
 
-btn.onclick=()=>{
- if(locked) return;
- const u=username.value.trim();
- const m=message.value.trim();
- if(!u||!m){info.innerText="Isi nama & pesan";return;}
- socket.emit("send-message",{username:u,message:m});
- message.value="";
- locked=true;btn.disabled=true;
+btn.onclick = ()=>{
+  if(locked) return;
+
+  const u = username.value.trim();
+  const m = message.value.trim();
+
+  if(!u || !m){
+    info.innerText = "Isi nama & pesan";
+    return;
+  }
+
+  socket.emit("send-message",{ username:u, message:m });
+  message.value = "";
+  locked = true;
+  btn.disabled = true;
 };
 
 socket.on("spam-warning",txt=>{
- let s=5;
- info.innerText=txt;
- const t=setInterval(()=>{
-  s--;info.innerText=`Tunggu ${s} detik`;
-  if(s<=0){clearInterval(t);locked=false;btn.disabled=false;info.innerText="";}
- },1000);
+  let s = 5;
+  info.innerText = txt;
+
+  const t = setInterval(()=>{
+    s--;
+    info.innerText = `Tunggu ${s} detik`;
+    if(s <= 0){
+      clearInterval(t);
+      locked = false;
+      btn.disabled = false;
+      info.innerText = "";
+    }
+  },1000);
 });
 
 socket.on("admin-refresh",()=>{
- locked=false;btn.disabled=false;
+  locked = false;
+  btn.disabled = false;
 });
 </script>
 
