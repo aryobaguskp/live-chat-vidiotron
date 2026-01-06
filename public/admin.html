@@ -96,6 +96,31 @@ button.secondary{background:#444}
   font-size:13px;
   opacity:.7;
 }
+
+/* ===== CONNECTION STATUS ===== */
+#connStatus{
+  font-size:13px;
+  padding:6px 12px;
+  border-radius:20px;
+  font-weight:600;
+  letter-spacing:.5px;
+}
+
+#connStatus.online{
+  background:#1e3d2b;
+  color:#4dff9a;
+}
+
+#connStatus.reconnecting{
+  background:#3d3520;
+  color:#ffd27d;
+}
+
+#connStatus.offline{
+  background:#3d1e1e;
+  color:#ff7070;
+}
+
 </style>
 </head>
 
@@ -113,15 +138,19 @@ button.secondary{background:#444}
 <div id="dashboard">
 
   <div id="topbar">
-    <div id="brand">
-      <img src="logo.png">
-      <b>Live Chat Café – Admin</b>
-    </div>
-    <div>
-      <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
-      <button class="secondary" onclick="logout()">Logout</button>
-    </div>
+  <div id="brand">
+    <img src="logo.png">
+    <h1>Live Chat Café – Admin</h1>
   </div>
+  <div id="connStatus" class="status online">
+    ● ONLINE
+  </div>
+  <div id="top-actions">
+    <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
+    <button class="secondary" onclick="logout()">Logout</button>
+  </div>
+</div>
+
 
   <div id="content">
 
@@ -146,7 +175,12 @@ button.secondary{background:#444}
 </div>
 
 <script>
-const socket = io();
+const socket = io({
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000
+});
+
 
 /* ELEMENT */
 const loginBox = document.getElementById("login");
@@ -155,6 +189,8 @@ const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 const btnApproveAll = document.getElementById("btnApproveAll");
 const bgOpacity = document.getElementById("bgOpacity");
+const connStatus = document.getElementById("connStatus");
+
 
 let busy = false;
 
@@ -244,6 +280,23 @@ function approveAll(){
     socket.emit("approve-all");
   }
 }
+
+/* ===== STATUS SOCKET ===== */
+socket.on("connect",()=>{
+  connStatus.className = "online";
+  connStatus.innerText = "● ONLINE";
+  socket.emit("admin-reconnect");
+});
+
+socket.on("disconnect",()=>{
+  connStatus.className = "offline";
+  connStatus.innerText = "● OFFLINE";
+});
+
+socket.io.on("reconnect_attempt",()=>{
+  connStatus.className = "reconnecting";
+  connStatus.innerText = "● RECONNECTING…";
+});
 </script>
 
 </body>

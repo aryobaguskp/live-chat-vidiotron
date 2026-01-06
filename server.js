@@ -131,6 +131,13 @@ io.on("connection",(socket)=>{
   io.emit("display-bg-opacity", displayBgOpacity);
   });
 
+  socket.on("admin-reconnect",()=>{
+  if(socket.isAdmin){
+    socket.emit("admin-refresh", messages);
+  }
+});
+
+
 });
 
 server.listen(PORT,()=>{
