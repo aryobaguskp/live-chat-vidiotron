@@ -18,18 +18,8 @@ const SPAM_DELAY = 5000;
 
 let messages = [];
 let lastMessageTime = {};
-let bgOpacity = 0.55; // default opacity background display
 
 io.on("connection",(socket)=>{
-
-  // kirim opacity saat display connect
-  socket.emit("bg-opacity", bgOpacity);
-
-  socket.on("set-bg-opacity",(val)=>{
-    if(!socket.isAdmin) return;
-    bgOpacity = val;
-    io.emit("bg-opacity", bgOpacity);
-  });
 
   // kirim pesan approved saat display connect
   socket.emit(
