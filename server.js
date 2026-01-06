@@ -118,7 +118,7 @@ io.on("connection",(socket)=>{
       if(i === pending.length - 1){
         io.emit("admin-refresh", messages);
       }
-    }, i * 600); // ⏱ delay 600ms per pesan
+    }, i * 1000); // ⏱ delay 
   });
 });
 
