@@ -158,6 +158,21 @@ button:disabled{ opacity:.5; cursor:not-allowed }
 
 </div>
 
+<div style="margin-top:20px">
+  <label style="font-size:13px;opacity:.7">
+    Background Display Opacity
+  </label>
+  <input
+    type="range"
+    min="0"
+    max="0.9"
+    step="0.05"
+    value="0.55"
+    id="opacityRange"
+  >
+</div>
+
+
 <script>
 const socket = io();
 
@@ -166,6 +181,7 @@ const dashboardBox = document.getElementById("dashboard");
 const list = document.getElementById("list");
 const errorBox = document.getElementById("error");
 const btnApproveAll = document.getElementById("btnApproveAll");
+const opacityRange = document.getElementById("opacityRange");
 
 let busy = false;
 
@@ -247,6 +263,19 @@ function approveAll(){
     socket.emit("approve-all");
   }
 }
+
+
+opacityRange.oninput = ()=>{
+  socket.emit(
+    "set-bg-opacity",
+    parseFloat(opacityRange.value)
+  );
+};
+
+socket.on("bg-opacity",(val)=>{
+  opacityRange.value = val;
+});
+
 </script>
 
 </body>

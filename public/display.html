@@ -6,18 +6,27 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
-/* ===== RESET ===== */
-*{box-sizing:border-box}
-
-/* ===== GLOBAL ===== */
 body{
   margin:0;
   height:100vh;
-  background:
-    radial-gradient(circle at top,#1e1e1e 0%,#000 60%);
-  color:#fff;
   font-family:"Segoe UI",Arial,sans-serif;
   overflow:hidden;
+}
+
+/* ===== BACKGROUND ===== */
+#bg{
+  position:fixed;
+  inset:0;
+  background:url("bg-display.jpg") center/cover no-repeat;
+  z-index:-2;
+}
+#overlay{
+  position:fixed;
+  inset:0;
+  background:black;
+  opacity:.55;
+  z-index:-1;
+  transition:opacity .3s;
 }
 
 /* ===== HEADER ===== */
@@ -29,39 +38,16 @@ body{
   display:flex;
   align-items:center;
   gap:20px;
+  color:white;
 }
-#header img{
-  height:70px;
-}
+#header img{height:70px}
 #header h1{
   margin:0;
   font-size:42px;
   letter-spacing:3px;
-  font-weight:700;
-  text-shadow:0 0 15px rgba(255,210,125,.35);
-}
-#header span{
-  font-size:16px;
-  opacity:.7;
 }
 
-/* ===== DIVIDER LINE ===== */
-#divider{
-  position:absolute;
-  top:120px;
-  left:50px;
-  right:50px;
-  height:1px;
-  background:linear-gradient(
-    to right,
-    transparent,
-    #ffd27d,
-    transparent
-  );
-  opacity:.6;
-}
-
-/* ===== CHAT AREA ===== */
+/* ===== CHAT ===== */
 #messages{
   position:absolute;
   bottom:60px;
@@ -71,106 +57,50 @@ body{
   display:flex;
   flex-direction:column;
   justify-content:flex-end;
-  pointer-events:none;
 }
-
-/* ===== MESSAGE ===== */
 .msg{
   margin-top:22px;
   font-size:32px;
-  line-height:1.35;
-  animation:slideUp .6s ease-out;
 }
-.msg b{
-  color:#ffd27d;
-  font-weight:700;
-  text-shadow:0 0 12px rgba(255,210,125,.45);
-}
-
-/* ===== ANIMATION ===== */
-@keyframes slideUp{
-  from{
-    transform:translateY(35px);
-    opacity:0;
-  }
-  to{
-    transform:translateY(0);
-    opacity:1;
-  }
-}
-
-/* ===== FOOTER ===== */
-#footer{
-  position:absolute;
-  bottom:18px;
-  left:60px;
-  right:60px;
-  display:flex;
-  justify-content:space-between;
-  font-size:14px;
-  opacity:.45;
-}
-#footer span:last-child{
-  font-weight:500;
-}
+.msg b{color:#ffd27d}
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
+<div id="bg"></div>
+<div id="overlay"></div>
+
 <div id="header">
-  <img src="logo.png" alt="Logo Café">
-  <div>
-    <h1>LIVE CHAT CAFÉ</h1>
-    <span>Sampaikan pesan Anda • Ditampilkan secara real-time</span>
-  </div>
+  <img src="logo.png">
+  <h1>LIVE CHAT CAFÉ</h1>
 </div>
 
-<div id="divider"></div>
-
-<!-- CHAT -->
 <div id="messages"></div>
-
-<!-- FOOTER -->
-<div id="footer">
-  <span>Powered by Live Chat System</span>
-  <span id="clock"></span>
-</div>
 
 <script>
 const socket = io();
 const box = document.getElementById("messages");
-const clock = document.getElementById("clock");
-const MAX_MESSAGES = 8;
+const overlay = document.getElementById("overlay");
+const MAX = 8;
 
-/* ===== JAM REALTIME ===== */
-setInterval(()=>{
-  const d=new Date();
-  clock.innerText =
-    d.getHours().toString().padStart(2,"0")+":"+
-    d.getMinutes().toString().padStart(2,"0");
-},1000);
-
-/* ===== RENDER AWAL ===== */
 socket.on("refresh-messages",(msgs)=>{
   box.innerHTML="";
-  msgs.slice(-MAX_MESSAGES).forEach(addMessage);
+  msgs.slice(-MAX).forEach(add);
 });
 
-/* ===== PESAN BARU ===== */
-socket.on("new-message",(msg)=>{
-  addMessage(msg);
+socket.on("new-message",(msg)=>add(msg));
+
+socket.on("bg-opacity",(val)=>{
+  overlay.style.opacity = val;
 });
 
-/* ===== TAMBAH PESAN ===== */
-function addMessage(msg){
-  const div=document.createElement("div");
-  div.className="msg";
-  div.innerHTML=`<b>${msg.username}</b>: ${msg.message}`;
-  box.appendChild(div);
-
-  if(box.children.length > MAX_MESSAGES){
+function add(msg){
+  const d=document.createElement("div");
+  d.className="msg";
+  d.innerHTML=`<b>${msg.username}</b>: ${msg.message}`;
+  box.appendChild(d);
+  if(box.children.length>MAX){
     box.removeChild(box.children[0]);
   }
 }
