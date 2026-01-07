@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Live Chat Café – Videotron</title>
 <script src="/socket.io/socket.io.js"></script>
 
@@ -47,11 +48,11 @@ body{
   gap:20px;
 }
 #header img{
-  height:70px;
+  height:clamp(40px, 6vh, 80px);
 }
 #header h1{
   margin:0;
-  font-size:42px;
+  font-size:clamp(26px, 3.5vw, 56px);
   letter-spacing:3px;
   font-weight:700;
   text-shadow:0 0 15px rgba(255,210,125,.35);
@@ -90,10 +91,45 @@ body{
   pointer-events:none;
 }
 
+/* ===== CHAT LAYOUT MODE ===== */
+
+/* FULL SCREEN */
+body.chat-full #messages{
+  left:5vw;
+  right:5vw;
+  bottom:6vh;
+  max-height:60vh;
+}
+
+/* ¼ LAYAR – LIVE MUSIC (REKOMENDASI) */
+body.chat-quarter #messages{
+  right:3vw;
+  bottom:5vh;
+  width:25vw;
+  max-height:45vh;
+}
+
+/* ½ LAYAR */
+body.chat-half #messages{
+  left:3vw;
+  right:3vw;
+  bottom:5vh;
+  max-height:40vh;
+}
+
+/* SAMPING (VERTICAL LED) */
+body.chat-side #messages{
+  left:3vw;
+  top:20vh;
+  width:28vw;
+  max-height:60vh;
+}
+
+
 /* ===== MESSAGE ===== */
 .msg{
   margin-top:22px;
-  font-size:32px;
+  font-size:clamp(22px, 2.8vw, 38px);
   line-height:1.35;
   animation:slideUp .6s ease-out;
 }
@@ -123,7 +159,7 @@ body{
   right:60px;
   display:flex;
   justify-content:space-between;
-  font-size:14px;
+  font-size:clamp(12px, 1.2vw, 16px);
   opacity:.45;
 }
 #footer span:last-child{
@@ -200,6 +236,11 @@ function addMessage(msg){
     box.removeChild(box.children[0]);
   }
 }
+
+socket.on("chat-layout",(mode)=>{
+  document.body.className = "chat-" + mode;
+});
+
 </script>
 
 </body>

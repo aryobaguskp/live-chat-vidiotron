@@ -146,6 +146,15 @@ button.secondary{background:#444}
     ● ONLINE
   </div>
   <div id="top-actions">
+
+    <!-- PILIH PENEMPATAN CHAT -->
+  <select id="chatLayout">
+    <option value="full">Full Screen</option>
+    <option value="quarter">¼ Layar (Live Music)</option>
+    <option value="half">½ Layar</option>
+    <option value="side">Samping</option>
+  </select>
+
     <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
     <button class="secondary" onclick="deleteAll()">Delete Semua</button>
     <button class="secondary" onclick="logout()">Logout</button>
@@ -304,6 +313,18 @@ socket.io.on("reconnect_attempt",()=>{
   connStatus.className = "reconnecting";
   connStatus.innerText = "● RECONNECTING…";
 });
+
+const chatLayout = document.getElementById("chatLayout");
+
+chatLayout.onchange = ()=>{
+  socket.emit("set-chat-layout", chatLayout.value);
+};
+
+// sync saat reconnect
+socket.on("chat-layout",(mode)=>{
+  chatLayout.value = mode;
+});
+
 </script>
 
 </body>
