@@ -135,6 +135,19 @@ io.on("connection",(socket)=>{
   if(socket.isAdmin){
     socket.emit("admin-refresh", messages);
   }
+
+  socket.on("delete-all-messages",()=>{
+  if(!socket.isAdmin) return;
+
+  messages = [];
+
+  // refresh admin
+  io.emit("admin-refresh", messages);
+
+  // bersihkan display
+  io.emit("refresh-messages", []);
+});
+
 });
 
 

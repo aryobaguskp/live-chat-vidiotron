@@ -147,6 +147,7 @@ button.secondary{background:#444}
   </div>
   <div id="top-actions">
     <button id="btnApproveAll" onclick="approveAll()">Approve Semua</button>
+    <button class="secondary" onclick="deleteAll()">Delete Semua</button>
     <button class="secondary" onclick="logout()">Logout</button>
   </div>
 </div>
@@ -280,6 +281,12 @@ function approveAll(){
     socket.emit("approve-all");
   }
 }
+function deleteAll(){
+  if(confirm("⚠️ Hapus SEMUA pesan? Tindakan ini tidak bisa dibatalkan!")){
+    socket.emit("delete-all-messages");
+  }
+}
+
 
 /* ===== STATUS SOCKET ===== */
 socket.on("connect",()=>{
