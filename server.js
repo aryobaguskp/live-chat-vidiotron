@@ -19,7 +19,7 @@ const SPAM_DELAY = 5000;
 let messages = [];
 let lastMessageTime = {};
 let displayBgOpacity = 0.55; 
-let chatLayout = "full"; // default
+
 
 
 
@@ -148,15 +148,6 @@ io.on("connection",(socket)=>{
 
   // bersihkan display
   io.emit("refresh-messages", []);
-  });
-  // kirim layout saat client connect
-  socket.emit("chat-layout", chatLayout);
-
-  // admin set layout
-  socket.on("set-chat-layout",(mode)=>{
-  if(!socket.isAdmin) return;
-  chatLayout = mode;
-  io.emit("chat-layout", chatLayout);
   });
 
 });
