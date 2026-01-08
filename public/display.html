@@ -80,12 +80,18 @@ body{
 
 /* ===== CHAT AREA ===== */
 #messages{
-  position:absolute;
+ position:absolute;
+  left:5vw;
+  right:5vw;
+  bottom:6vh;
+  max-height:60vh;
   display:flex;
   flex-direction:column;
   justify-content:flex-end;
   pointer-events:none;
+  transition:all .4s ease;
 }
+
 
 /* ===== MESSAGE ===== */
 .msg{

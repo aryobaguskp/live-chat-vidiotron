@@ -316,12 +316,6 @@ socket.io.on("reconnect_attempt",()=>{
   connStatus.innerText = "● RECONNECTING…";
 });
 
-const chatLayout = document.getElementById("chatLayout");
-
-chatLayout.onchange = ()=>{
-  socket.emit("set-chat-layout", chatLayout.value);
-};
-
 // sync saat reconnect
 socket.on("chat-layout",(mode)=>{
   chatLayout.value = mode;
